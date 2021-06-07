@@ -89,6 +89,8 @@ Class OCCTProxyD3D: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     ImportBrep(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     ImportBrep(String): PrivateScope, Public, HideBySig
     ImportStep(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
+    TraverseDocument(handle<TDocStd_Document>* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
+    TraverseLabel(TDF_Label* IsImplicitlyDereferenced, TCollection_AsciiString* IsImplicitlyDereferenced, TopLoc_Location* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     CreateOrigin(): PrivateScope, Public, HideBySig
     ImportIges(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     ExportBRep(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
