@@ -58,6 +58,9 @@
 #include <TPrsStd_AISViewer.hxx>
 #include <TPrsStd_AISPresentation.hxx>
 #include <XCAFPrs_Driver.hxx>
+#include <BRepBuilderAPI_GTransform.hxx>
+#include <AIS_Trihedron.hxx>
+#include <Geom_Axis2Placement.hxx>
 
 //list of required OCCT libraries
 #pragma comment(lib, "TKernel.lib")
@@ -76,9 +79,14 @@
 #pragma comment(lib, "TKVCAF.lib")
 #pragma comment(lib, "TKXCAF.lib")
 #pragma comment(lib, "TKCAF.lib")
-//#pragma comment(lib, "TKShHealing.lib")
-//#pragma comment(lib, "TKBinXCAF.lib")
+#pragma comment(lib, "TKShHealing.lib")
+#pragma comment(lib, "TKBinXCAF.lib")
 #pragma comment(lib, "TKXDESTEP.lib")
+#pragma comment(lib, "TKTopAlgo.lib")
+#pragma comment(lib, "TKGeomAlgo.lib")
+#pragma comment(lib, "TKGeomBase.lib")
+#pragma comment(lib, "TKG2d.lib")
+#pragma comment(lib, "TKG3d.lib")
 
 #pragma comment(lib, "D3D9.lib")
 
@@ -821,29 +829,66 @@ public:
 
 		Handle(TPrsStd_AISViewer) anAISViewer;
 
-		if (!TPrsStd_AISViewer::Find(anAccess, anAISViewer)) {
+		if (!TPrsStd_AISViewer::Find(anAccess, anAISViewer))
 			anAISViewer = TPrsStd_AISViewer::New(anAccess, myViewer());
-		}
+
+		//Set context
+		anAISViewer->SetInteractiveContext(myAISContext());
 
 		// collect sequence of labels to display
 		Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(hDoc->Main());
+
 		TDF_LabelSequence seq;
 		aShapeTool->GetFreeShapes(seq);
 
+		//TopoDS_Shape shape = aShapeTool->GetShape(seq.Value(1));
+
+		//gp_GTrsf theTransformation;
+		//gp_Mat rot(1, 0, 0, 0, 0.5, 0, 0, 0, 1.5);
+		//theTransformation.SetVectorialPart(rot);
+		//theTransformation.SetTranslationPart(gp_XYZ(5000, 5, 5));
+		//BRepBuilderAPI_GTransform myBRepGTransformation(shape, theTransformation, true);
+		//TopoDS_Shape TransformedShape = myBRepGTransformation.Shape();
+
 		// set presentations and show
-		for (Standard_Integer i = 1; i <= seq.Length(); i++) {
+		for (Standard_Integer i = 1; i <= seq.Length(); i++)
+		{
 			Handle(TPrsStd_AISPresentation) prs;
 
-			if (!seq.Value(i).FindAttribute(TPrsStd_AISPresentation::GetID(), prs)) {
+			if (!seq.Value(i).FindAttribute(TPrsStd_AISPresentation::GetID(), prs))
 				prs = TPrsStd_AISPresentation::Set(seq.Value(i), XCAFPrs_Driver::GetID());
-			}
 
+			//Set the selection mode to `sel_mode'.
+			//0 -> whole shape
+			//1 -> vertex
+			//2 -> edge
+			//3 -> wire
+			//4 -> face
+			//prs->SetSelectionMode(0);
 			prs->SetMode(1);
 			prs->Display(Standard_True);
-
 		}
 
 		TPrsStd_AISViewer::Update(hDoc->GetData()->Root());
+
+		//Create origin
+		//Handle(AIS_Trihedron) origin = new AIS_Trihedron(new Geom_Axis2Placement(gp_Pnt(), gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
+		Handle(AIS_Trihedron) origin = new AIS_Trihedron(new Geom_Axis2Placement(gp::XOY()));
+
+		//TODO: Disabled because of issue https://tracker.dev.opencascade.org/view.php?id=29950.
+		origin->SetDrawArrows(Standard_False);
+
+		origin->SetTextColor(Quantity_Color(Quantity_NOC_WHITE));
+		origin->SetDatumPartColor(Prs3d_DP_XAxis, Quantity_Color(Quantity_NOC_RED));
+		origin->SetDatumPartColor(Prs3d_DP_XArrow, Quantity_Color(Quantity_NOC_RED));
+		origin->SetDatumPartColor(Prs3d_DP_YAxis, Quantity_Color(Quantity_NOC_BLUE));
+		origin->SetDatumPartColor(Prs3d_DP_YArrow, Quantity_Color(Quantity_NOC_BLUE));
+		origin->SetDatumPartColor(Prs3d_DP_ZAxis, Quantity_Color(Quantity_NOC_GREEN));
+		origin->SetDatumPartColor(Prs3d_DP_ZArrow, Quantity_Color(Quantity_NOC_GREEN));
+		origin->SetDatumDisplayMode(Prs3d_DM_WireFrame);
+
+		myAISContext()->Display(origin, Standard_False);
+		myAISContext()->UpdateCurrentViewer();
 
 		//Первоначальный импорт
 		//STEPControl_Reader aReader;
