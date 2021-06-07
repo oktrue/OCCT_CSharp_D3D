@@ -144,6 +144,11 @@ public:
 		myAISContext() = new AIS_InteractiveContext(myViewer());
 		myAISContext()->UpdateCurrentViewer();
 		myView()->MustBeResized();
+
+		//Customize environment
+		SetBackgroundColor(37, 37, 38);
+		CreateOrigin();
+
 		return true;
 	}
 
@@ -841,14 +846,16 @@ public:
 		TDF_LabelSequence seq;
 		aShapeTool->GetFreeShapes(seq);
 
-		//TopoDS_Shape shape = aShapeTool->GetShape(seq.Value(1));
+		TopoDS_Shape shape = aShapeTool->GetShape(seq.Value(1));
 
-		//gp_GTrsf theTransformation;
+		gp_GTrsf theTransformation;
 		//gp_Mat rot(1, 0, 0, 0, 0.5, 0, 0, 0, 1.5);
 		//theTransformation.SetVectorialPart(rot);
-		//theTransformation.SetTranslationPart(gp_XYZ(5000, 5, 5));
-		//BRepBuilderAPI_GTransform myBRepGTransformation(shape, theTransformation, true);
-		//TopoDS_Shape TransformedShape = myBRepGTransformation.Shape();
+		theTransformation.SetTranslationPart(gp_XYZ(100, 0, 0));
+		BRepBuilderAPI_GTransform myBRepGTransformation(shape, theTransformation, true);
+		TopoDS_Shape TransformedShape = myBRepGTransformation.Shape();
+
+		aShapeTool->SetShape(seq.Value(1), TransformedShape);
 
 		// set presentations and show
 		for (Standard_Integer i = 1; i <= seq.Length(); i++)
@@ -870,25 +877,6 @@ public:
 		}
 
 		TPrsStd_AISViewer::Update(hDoc->GetData()->Root());
-
-		//Create origin
-		//Handle(AIS_Trihedron) origin = new AIS_Trihedron(new Geom_Axis2Placement(gp_Pnt(), gp_Dir(0, 0, 1), gp_Dir(1, 0, 0)));
-		Handle(AIS_Trihedron) origin = new AIS_Trihedron(new Geom_Axis2Placement(gp::XOY()));
-
-		//TODO: Disabled because of issue https://tracker.dev.opencascade.org/view.php?id=29950.
-		origin->SetDrawArrows(Standard_False);
-
-		origin->SetTextColor(Quantity_Color(Quantity_NOC_WHITE));
-		origin->SetDatumPartColor(Prs3d_DP_XAxis, Quantity_Color(Quantity_NOC_RED));
-		origin->SetDatumPartColor(Prs3d_DP_XArrow, Quantity_Color(Quantity_NOC_RED));
-		origin->SetDatumPartColor(Prs3d_DP_YAxis, Quantity_Color(Quantity_NOC_BLUE));
-		origin->SetDatumPartColor(Prs3d_DP_YArrow, Quantity_Color(Quantity_NOC_BLUE));
-		origin->SetDatumPartColor(Prs3d_DP_ZAxis, Quantity_Color(Quantity_NOC_GREEN));
-		origin->SetDatumPartColor(Prs3d_DP_ZArrow, Quantity_Color(Quantity_NOC_GREEN));
-		origin->SetDatumDisplayMode(Prs3d_DM_WireFrame);
-
-		myAISContext()->Display(origin, Standard_False);
-		myAISContext()->UpdateCurrentViewer();
 
 		//Первоначальный импорт
 		//STEPControl_Reader aReader;
@@ -917,6 +905,26 @@ public:
 		//}
 
 		return true;
+	}
+
+	void CreateOrigin()
+	{
+		Handle(AIS_Trihedron) origin = new AIS_Trihedron(new Geom_Axis2Placement(gp::XOY()));
+
+		//TODO: Disabled because of issue https://tracker.dev.opencascade.org/view.php?id=29950.
+		origin->SetDrawArrows(Standard_False);
+		origin->SetTextColor(Quantity_Color(Quantity_NOC_WHITE));
+		origin->SetDatumPartColor(Prs3d_DP_XAxis, Quantity_Color(255.0 / 255.0, 89.0 / 255.0, 94.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumPartColor(Prs3d_DP_XArrow, Quantity_Color(255.0 / 255.0, 89.0 / 255.0, 94.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumPartColor(Prs3d_DP_YAxis, Quantity_Color(25.0 / 255.0, 130.0 / 255.0, 196.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumPartColor(Prs3d_DP_YArrow, Quantity_Color(25.0 / 255.0, 130.0 / 255.0, 196.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumPartColor(Prs3d_DP_ZAxis, Quantity_Color(187.0 / 255.0, 213.0 / 255.0, 150.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumPartColor(Prs3d_DP_ZArrow, Quantity_Color(187.0 / 255.0, 213.0 / 255.0, 150.0 / 255.0, Quantity_TOC_RGB));
+		origin->SetDatumDisplayMode(Prs3d_DM_WireFrame);
+		origin->SetZLayer(Graphic3d_ZLayerId_Topmost);
+
+		myAISContext()->Display(origin, Standard_False);
+		myAISContext()->UpdateCurrentViewer();
 	}
 
 	/// <summary>
