@@ -854,22 +854,9 @@ public:
 		TraverseDocument(hDoc);
 
 		//Find child by name https://stackoverflow.com/questions/53497247/opencascade-generate-a-tree-view-of-information-inside-a-step-file.
-		//for (Standard_Integer i = 1; i <= seq.Value(1).NbChildren(); i++)
-		//{
-		//	TDF_ChildIterator chIter;
-
-		//	Handle(TDataStd_Name) N;
-		//	if (seq.Value(1).FindAttribute(TDataStd_Name::GetID(), N))
-		//	{
-		//		// no name is attached 
-		//	}
-		//	TCollection_ExtendedString name = N->Get();
-		//}
-
 		//НЛИ20-3.80.10.00.00 СБ. Репер накладной снаряженный
 		//НЛИ20-3.80.10.00.00 СБ. B\x4͐п\x4͐р накладной DĄϐC\x4ЀяC؄͐нCഄҰй:1
-		TCollection_ExtendedString myName = "НЛИ20-3.80.10.00.00 СБ. B\x4͐п\x4͐р накладной DĄϐC\x4ЀяC؄͐нCഄҰй:1";
-
+		TCollection_ExtendedString myName = L"НЛИ20-3.80.10.00.00 СБ. B\x4͐п\x4͐р накладной DĄϐC\x4ЀяC؄͐нCഄҰй:1";
 		TDF_Label aLabel = seq.Value(1);
 		int i = 0;
 
@@ -878,29 +865,17 @@ public:
 			Handle(TDataStd_Name) N;
 			if (!aChildIter.Value().FindAttribute(TDataStd_Name::GetID(), N))
 			{
+				//no name is attached 
 				OutputDebugStringW(L"Error!\n");
-				// no name is attached 
 			}
 
 			TCollection_ExtendedString name = N->Get();
-			TCollection_AsciiString aName = N->Get();
 
-			if (name.IsEmpty())
-			{
-				TDF_Label aRefLabel;
-				if (XCAFDoc_ShapeTool::GetReferredShape(aChildIter.Value(), aRefLabel)
-					&& aRefLabel.FindAttribute(TDataStd_Name::GetID(), N))
-				{
-					name = N->Get(); // product name
-				}
-			}
-
-			if (name.Search("накладной") != -1)
+			if (name == myName)
 			{
 				OutputDebugStringW(L"Success!\n");
 			}
 
-			Standard_CString fixedName = TCollection_AsciiString(name).ToCString();
 			i++;
 
 			OutputDebugStringW(std::to_wstring(i).c_str());
@@ -937,7 +912,7 @@ public:
 
 		TPrsStd_AISViewer::Update(hDoc->GetData()->Root());
 
-		//�������������� ������
+		//Первоначальный вариант чтения
 		//STEPControl_Reader aReader;
 		//if (aReader.ReadFile(theFileName.ToCString()) != IFSelect_RetDone)
 		//{
@@ -965,7 +940,6 @@ public:
 
 		return true;
 	}
-
 
 	//! Handle document root shapes.
 	int TraverseDocument(const Handle(TDocStd_Document)& theDoc)
