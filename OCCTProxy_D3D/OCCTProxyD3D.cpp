@@ -805,9 +805,9 @@ public:
 		reader.SetColorMode(Standard_True);
 		reader.SetNameMode(Standard_True);
 
-		if (!reader.Transfer(aDoc)) {
+		if (!reader.Transfer(aDoc)) 
+		{
 			std::cout << "Cannot read any relevant data from the STEP file" << std::endl;
-			// abandon .. 
 		}
 
 		// Assembly = XCAFDoc_DocumentTool::ShapeTool(doc->Main());
@@ -878,6 +878,10 @@ public:
 			{
 				OutputDebugStringW(L"Success!\n");
 
+				Handle(XCAFDoc_ColorTool) myColors = XCAFDoc_DocumentTool::ColorTool(aDoc->Main());
+				TDF_LabelSequence ColLabels;
+				myColors->GetColors(ColLabels);
+
 				TDF_Label adapter = aChildIter.Value();
 				Standard_Boolean isShape = myAssembly->IsShape(adapter);
 				Standard_Boolean isSimpleShape = myAssembly->IsSimpleShape(adapter);
@@ -885,7 +889,7 @@ public:
 				Standard_Boolean isFree = myAssembly->IsFree(adapter);
 				Standard_Boolean isComp = myAssembly->IsComponent(adapter);
 				Standard_Boolean isRef = myAssembly->IsReference(adapter);
-			
+
 				TDF_Label rAdapter;
 				Standard_Boolean receivedShape = myAssembly->GetReferredShape(adapter, rAdapter);
 				TopoDS_Shape sAdapter = myAssembly->GetShape(rAdapter);
@@ -897,6 +901,14 @@ public:
 				BRepBuilderAPI_Transform myBRepTransformation(sAdapter, t, false);
 				TopoDS_Shape tShape = myBRepTransformation.Shape();
 				myAssembly->SetShape(rAdapter, tShape);
+				myAssembly->UpdateAssemblies();
+
+				Quantity_Color col;
+				XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
+				Standard_Boolean colorOk = myColors->GetColor(rAdapter, ctype, col);
+
+				Handle(AIS_Shape) ais_shape = new AIS_Shape(tShape);
+				ais_shape->SetColor(col);
 				myAssembly->UpdateAssemblies();
 			}
 
