@@ -61,6 +61,7 @@
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <AIS_Trihedron.hxx>
 #include <Geom_Axis2Placement.hxx>
+#include <BRepBuilderAPI_Transform.hxx>
 
 //list of required OCCT libraries
 #pragma comment(lib, "TKernel.lib")
@@ -796,14 +797,18 @@ public:
 	/// <param name="theFileName">Name of import file</param>
 	bool ImportStep(const TCollection_AsciiString& theFileName)
 	{
-		Handle(XCAFApp_Application) hApp = XCAFApp_Application::GetApplication();
-		Handle(TDocStd_Document) hDoc;
-		hApp->NewDocument(TCollection_ExtendedString("MDTV-CAF"), hDoc);
+		Handle(TDocStd_Document) aDoc;
+		Handle(XCAFApp_Application) anApp = XCAFApp_Application::GetApplication();
+		anApp->NewDocument(L"MDTV-XCAF", aDoc);
 		STEPCAFControl_Reader reader;
-		IFSelect_ReturnStatus stat = reader.ReadFile(theFileName.ToCString());
+		IFSelect_ReturnStatus readstat = reader.ReadFile(theFileName.ToCString());
 		reader.SetColorMode(Standard_True);
 		reader.SetNameMode(Standard_True);
-		Standard_Boolean ok = reader.Transfer(hDoc);
+
+		if (!reader.Transfer(aDoc)) {
+			std::cout << "Cannot read any relevant data from the STEP file" << std::endl;
+			// abandon .. 
+		}
 
 		// Assembly = XCAFDoc_DocumentTool::ShapeTool(doc->Main());
 
@@ -830,7 +835,7 @@ public:
 		//myAISContext()->Display(ais_shape, Standard_False);
 		//myAISContext()->UpdateCurrentViewer();
 
-		TDF_Label anAccess = hDoc->GetData()->Root();
+		TDF_Label anAccess = aDoc->GetData()->Root();
 
 		Handle(TPrsStd_AISViewer) anAISViewer;
 
@@ -839,19 +844,17 @@ public:
 
 		//Set context
 		anAISViewer->SetInteractiveContext(myAISContext());
-
 		// collect sequence of labels to display
-		Handle(XCAFDoc_ShapeTool) aShapeTool = XCAFDoc_DocumentTool::ShapeTool(hDoc->Main());
+		Handle(XCAFDoc_ShapeTool) myAssembly = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
 
 		TDF_LabelSequence seq;
-		aShapeTool->GetFreeShapes(seq);
+		myAssembly->GetFreeShapes(seq);
 
-		TopoDS_Shape shape = aShapeTool->GetShape(seq.Value(1));
-
+		TopoDS_Shape shape = myAssembly->GetShape(seq.Value(1));
 		Standard_Integer chShapeCount = shape.NbChildren();
 		Standard_Integer chLabelCount = seq.Value(1).NbChildren();
 
-		TraverseDocument(hDoc);
+		//TraverseDocument(aDoc);
 
 		//Find child by name https://stackoverflow.com/questions/53497247/opencascade-generate-a-tree-view-of-information-inside-a-step-file.
 		//НЛИ20-3.80.10.00.00 СБ. Репер накладной снаряженный
@@ -874,6 +877,27 @@ public:
 			if (name == myName)
 			{
 				OutputDebugStringW(L"Success!\n");
+
+				TDF_Label adapter = aChildIter.Value();
+				Standard_Boolean isShape = myAssembly->IsShape(adapter);
+				Standard_Boolean isSimpleShape = myAssembly->IsSimpleShape(adapter);
+				Standard_Boolean isAss = myAssembly->IsAssembly(adapter);
+				Standard_Boolean isFree = myAssembly->IsFree(adapter);
+				Standard_Boolean isComp = myAssembly->IsComponent(adapter);
+				Standard_Boolean isRef = myAssembly->IsReference(adapter);
+			
+				TDF_Label rAdapter;
+				Standard_Boolean receivedShape = myAssembly->GetReferredShape(adapter, rAdapter);
+				TopoDS_Shape sAdapter = myAssembly->GetShape(rAdapter);
+				//TopLoc_Location loc = myAssembly->GetLocation(rAdapter);
+				//loc.Identity();
+
+				gp_Trsf t;
+				t.SetTranslation(gp_XYZ(100, 0, 0));
+				BRepBuilderAPI_Transform myBRepTransformation(sAdapter, t, false);
+				TopoDS_Shape tShape = myBRepTransformation.Shape();
+				myAssembly->SetShape(rAdapter, tShape);
+				myAssembly->UpdateAssemblies();
 			}
 
 			i++;
@@ -883,13 +907,11 @@ public:
 		}
 
 		//gp_GTrsf theTransformation;
-		//gp_Mat rot(1, 0, 0, 0, 0.5, 0, 0, 0, 1.5);
-		//theTransformation.SetVectorialPart(rot);
-		//theTransformation.SetTranslationPart(gp_XYZ(100, 0, 0));
+		//theTransformation.SetTranslationPart(gp_XYZ(1000, 0, 0));
 		//BRepBuilderAPI_GTransform myBRepGTransformation(shape, theTransformation, true);
 		//TopoDS_Shape TransformedShape = myBRepGTransformation.Shape();
-
-		//aShapeTool->SetShape(seq.Value(1), TransformedShape);
+		//myAssembly->SetShape(seq.Value(1), TransformedShape);
+		//myAssembly->UpdateAssemblies();
 
 		// set presentations and show
 		for (Standard_Integer i = 1; i <= seq.Length(); i++)
@@ -910,7 +932,7 @@ public:
 			prs->Display(Standard_True);
 		}
 
-		TPrsStd_AISViewer::Update(hDoc->GetData()->Root());
+		TPrsStd_AISViewer::Update(aDoc->GetData()->Root());
 
 		//Первоначальный вариант чтения
 		//STEPControl_Reader aReader;
