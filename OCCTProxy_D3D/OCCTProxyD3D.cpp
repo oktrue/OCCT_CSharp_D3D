@@ -62,6 +62,8 @@
 #include <AIS_Trihedron.hxx>
 #include <Geom_Axis2Placement.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
+#include <ShapeBuild_ReShape.hxx>
+#include <XCAFPrs_AISObject.hxx>
 
 //list of required OCCT libraries
 #pragma comment(lib, "TKernel.lib")
@@ -835,15 +837,15 @@ public:
 		//myAISContext()->Display(ais_shape, Standard_False);
 		//myAISContext()->UpdateCurrentViewer();
 
-		TDF_Label anAccess = aDoc->GetData()->Root();
+		//TDF_Label anAccess = aDoc->GetData()->Root();
 
-		Handle(TPrsStd_AISViewer) anAISViewer;
+		//Handle(TPrsStd_AISViewer) anAISViewer;
 
-		if (!TPrsStd_AISViewer::Find(anAccess, anAISViewer))
-			anAISViewer = TPrsStd_AISViewer::New(anAccess, myViewer());
+		//if (!TPrsStd_AISViewer::Find(anAccess, anAISViewer))
+		//	anAISViewer = TPrsStd_AISViewer::New(anAccess, myViewer());
 
-		//Set context
-		anAISViewer->SetInteractiveContext(myAISContext());
+		////Set context
+		//anAISViewer->SetInteractiveContext(myAISContext());
 		// collect sequence of labels to display
 		Handle(XCAFDoc_ShapeTool) myAssembly = XCAFDoc_DocumentTool::ShapeTool(aDoc->Main());
 
@@ -888,28 +890,40 @@ public:
 				Standard_Boolean isAss = myAssembly->IsAssembly(adapter);
 				Standard_Boolean isFree = myAssembly->IsFree(adapter);
 				Standard_Boolean isComp = myAssembly->IsComponent(adapter);
-				Standard_Boolean isRef = myAssembly->IsReference(adapter);
-
 				TDF_Label rAdapter;
-				Standard_Boolean receivedShape = myAssembly->GetReferredShape(adapter, rAdapter);
+				Standard_Boolean isRef = myAssembly->GetReferredShape(adapter, rAdapter);
+
+				XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
+				if (myColors->IsSet(rAdapter, ctype)) {
+					OutputDebugStringW(L"yes, there is one .. \n");
+				}
+
+				TopLoc_Location aLoc = myAssembly->GetLocation(adapter);
+
 				TopoDS_Shape sAdapter = myAssembly->GetShape(rAdapter);
 				//TopLoc_Location loc = myAssembly->GetLocation(rAdapter);
 				//loc.Identity();
-
+				
 				gp_Trsf t;
 				t.SetTranslation(gp_XYZ(100, 0, 0));
-				BRepBuilderAPI_Transform myBRepTransformation(sAdapter, t, false);
-				TopoDS_Shape tShape = myBRepTransformation.Shape();
-				myAssembly->SetShape(rAdapter, tShape);
+				//BRepBuilderAPI_Transform myBRepTransformation(sAdapter, t, false);
+				//TopoDS_Shape tShape = myBRepTransformation.Shape();
+
+				TopLoc_Location loc(t);
+				//sAdapter.Move(loc);
+
+
+				//myAssembly->SetShape(rAdapter, tShape);
+				myAssembly->SetShape(rAdapter, sAdapter.Moved(loc));
 				myAssembly->UpdateAssemblies();
 
-				Quantity_Color col;
-				XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
-				Standard_Boolean colorOk = myColors->GetColor(rAdapter, ctype, col);
+				//Quantity_Color col;
+				//XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
+				//Standard_Boolean colorOk = myColors->GetColor(rAdapter, ctype, col);
 
-				Handle(AIS_Shape) ais_shape = new AIS_Shape(tShape);
-				ais_shape->SetColor(col);
-				myAssembly->UpdateAssemblies();
+				//Handle(AIS_Shape) ais_shape = new AIS_Shape(tShape);
+				//ais_shape->SetColor(col);
+				//myAssembly->UpdateAssemblies();
 			}
 
 			i++;
@@ -926,25 +940,22 @@ public:
 		//myAssembly->UpdateAssemblies();
 
 		// set presentations and show
-		for (Standard_Integer i = 1; i <= seq.Length(); i++)
-		{
-			Handle(TPrsStd_AISPresentation) prs;
+		//for (Standard_Integer i = 1; i <= seq.Length(); i++)
+		//{
+		//	Handle(TPrsStd_AISPresentation) prs;
 
-			if (!seq.Value(i).FindAttribute(TPrsStd_AISPresentation::GetID(), prs))
-				prs = TPrsStd_AISPresentation::Set(seq.Value(i), XCAFPrs_Driver::GetID());
+		//	if (!seq.Value(i).FindAttribute(TPrsStd_AISPresentation::GetID(), prs))
+		//		prs = TPrsStd_AISPresentation::Set(seq.Value(i), XCAFPrs_Driver::GetID());
 
-			//Set the selection mode to `sel_mode'.
-			//0 -> whole shape
-			//1 -> vertex
-			//2 -> edge
-			//3 -> wire
-			//4 -> face
-			//prs->SetSelectionMode(0);
-			prs->SetMode(1);
-			prs->Display(Standard_True);
-		}
+		//	prs->SetMode(1);
+		//	prs->Display(Standard_True);
+		//}
 
-		TPrsStd_AISViewer::Update(aDoc->GetData()->Root());
+		//TPrsStd_AISViewer::Update(aDoc->GetData()->Root());
+
+		Handle(XCAFPrs_AISObject) coloredModel = new XCAFPrs_AISObject(seq.Value(1));
+		myAISContext()->Display(coloredModel, Standard_False);
+		myAISContext()->UpdateCurrentViewer();
 
 		//Первоначальный вариант чтения
 		//STEPControl_Reader aReader;
