@@ -6,7 +6,7 @@
     Title="Sample Import/Export" Height="600" Width="900" Icon="res/MainFrame.ico">
 	
 	<Window.Background>
-		<SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkColorKey}}"/>
+		<SolidColorBrush Color="White"/>
 	</Window.Background>
 	
 	<Window.Resources>
@@ -14,12 +14,13 @@
     </Window.Resources>
 		
     <Grid>
-	    <Grid.RowDefinitions>
- 			<RowDefinition Height="auto"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
 			<RowDefinition Height="auto"/>
 			<RowDefinition />
 			<RowDefinition Height="auto"/>
-		</Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
         
     	<Menu Height="25" Grid.Row="0">
     		<MenuItem Header="File">
@@ -173,5 +174,11 @@
         <StatusBar Background="White"  Grid.Row="3" Visibility="{Binding ElementName=ActivateStatusbar, Path=IsChecked, Converter={StaticResource boolToVisibilityConverter}}">
         	<TextBlock Text="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}, Path=StatusBarText}"/>
 		</StatusBar>
+
+        <Border Grid.Row="4">
+            <Grid>
+                <Slider x:Name="sX" Value="0" Minimum="-180" Maximum="180" Margin="8" ValueChanged="Slider_ValueChanged"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

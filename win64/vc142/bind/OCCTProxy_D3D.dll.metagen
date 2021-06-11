@@ -33,6 +33,13 @@ Class NCollection_Haft<opencascade::handle<D3DHost_GraphicDriver> >: AutoLayout,
   Methods:
     op_FunctionCall(): PrivateScope, Public, HideBySig, SpecialName
     Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
+Class NCollection_Haft<opencascade::handle<XCAFPrs_AISObject> >: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Interfaces:
+    System.IDisposable
+  Methods:
+    op_FunctionCall(): PrivateScope, Public, HideBySig, SpecialName
+    Dispose(): PrivateScope, Public, Final, Virtual, HideBySig
 Class OCCTProxyD3D: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Interfaces:
@@ -88,6 +95,7 @@ Class OCCTProxyD3D: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     GetContext(handle<AIS_InteractiveContext>*): PrivateScope, Public, HideBySig
     ImportBrep(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     ImportBrep(String): PrivateScope, Public, HideBySig
+    MoveAdapter(Double): PrivateScope, Public, HideBySig
     ImportStep(TCollection_AsciiString* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     TraverseDocument(handle<TDocStd_Document>* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig
     TraverseLabel(TDF_Label* IsImplicitlyDereferenced, TCollection_AsciiString* IsImplicitlyDereferenced, TopLoc_Location* IsImplicitlyDereferenced): PrivateScope, Public, HideBySig

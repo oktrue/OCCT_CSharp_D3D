@@ -794,6 +794,25 @@ public:
 	}
 
 	/// <summary>
+	///Select by rectangle
+	/// </summary>
+	void MoveAdapter(double x)
+	{
+		if (!myAISContext().IsNull())
+		{
+			if (coloredAdapter().IsNull() || coloredFixture().IsNull()) return;
+
+			gp_Trsf t;
+			//t.SetTranslation(gp_XYZ(x, 0, 0));
+			t.SetRotation(gp::OZ(), x / 180 * M_PI);
+			coloredAdapter()->SetLocalTransformation(t);
+			coloredFixture()->SetLocalTransformation(t);
+			OutputDebugStringW(std::to_wstring(x).c_str());
+			OutputDebugStringW(L"\n");;
+		}
+	}
+
+	/// <summary>
 	///Import Step file
 	/// </summary>
 	/// <param name="theFileName">Name of import file</param>
@@ -807,7 +826,7 @@ public:
 		reader.SetColorMode(Standard_True);
 		reader.SetNameMode(Standard_True);
 
-		if (!reader.Transfer(aDoc)) 
+		if (!reader.Transfer(aDoc))
 		{
 			std::cout << "Cannot read any relevant data from the STEP file" << std::endl;
 		}
@@ -892,6 +911,14 @@ public:
 				Standard_Boolean isComp = myAssembly->IsComponent(adapter);
 				TDF_Label rAdapter;
 				Standard_Boolean isRef = myAssembly->GetReferredShape(adapter, rAdapter);
+				myAssembly->RemoveComponent(adapter);
+				myAssembly->UpdateAssemblies();
+				coloredFixture() = new XCAFPrs_AISObject(seq.Value(1));
+				coloredAdapter() = new XCAFPrs_AISObject(rAdapter);
+				myAISContext()->Display(coloredFixture(), Standard_False);
+				myAISContext()->Display(coloredAdapter(), Standard_False);
+
+				myAISContext()->UpdateCurrentViewer();
 
 				XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
 				if (myColors->IsSet(rAdapter, ctype)) {
@@ -903,19 +930,10 @@ public:
 				TopoDS_Shape sAdapter = myAssembly->GetShape(rAdapter);
 				//TopLoc_Location loc = myAssembly->GetLocation(rAdapter);
 				//loc.Identity();
-				
-				gp_Trsf t;
-				t.SetTranslation(gp_XYZ(100, 0, 0));
-				//BRepBuilderAPI_Transform myBRepTransformation(sAdapter, t, false);
-				//TopoDS_Shape tShape = myBRepTransformation.Shape();
-
-				TopLoc_Location loc(t);
-				//sAdapter.Move(loc);
-
 
 				//myAssembly->SetShape(rAdapter, tShape);
-				myAssembly->SetShape(rAdapter, sAdapter.Moved(loc));
-				myAssembly->UpdateAssemblies();
+				//TDF_Label msAdapter = myAssembly->FindMainShape(sAdapter);
+				//myAssembly->SetShape(msAdapter, sAdapter.Moved(loc));
 
 				//Quantity_Color col;
 				//XCAFDoc_ColorType ctype = XCAFDoc_ColorGen;
@@ -952,10 +970,6 @@ public:
 		//}
 
 		//TPrsStd_AISViewer::Update(aDoc->GetData()->Root());
-
-		Handle(XCAFPrs_AISObject) coloredModel = new XCAFPrs_AISObject(seq.Value(1));
-		myAISContext()->Display(coloredModel, Standard_False);
-		myAISContext()->UpdateCurrentViewer();
 
 		//Первоначальный вариант чтения
 		//STEPControl_Reader aReader;
@@ -1250,5 +1264,7 @@ private:
 	NCollection_Haft<Handle(V3d_View)>               myView;
 	NCollection_Haft<Handle(AIS_InteractiveContext)> myAISContext;
 	NCollection_Haft<Handle(D3DHost_GraphicDriver)>  myGraphicDriver;
+	NCollection_Haft<Handle(XCAFPrs_AISObject)>		 coloredFixture;
+	NCollection_Haft<Handle(XCAFPrs_AISObject)>		 coloredAdapter;
 
 };

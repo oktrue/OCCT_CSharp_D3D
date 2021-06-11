@@ -386,6 +386,11 @@ namespace IE_WPF_D3D
             ChangeColor(false);
         }
 
+        public void MoveAdapter(double x)
+        {
+            View.MoveAdapter(x);
+        }
+
         public void Material()
         {
             MaterialDlg aDlg = new MaterialDlg(View);
